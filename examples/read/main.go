@@ -18,7 +18,7 @@ func main() {
 	if err := i2c.Configure(machine.I2CConfig{
 		SDA:       machine.GPIO32,
 		SCL:       machine.GPIO33,
-		Frequency: 400 * machine.KHz,
+		Frequency: 100 * machine.KHz,
 	}); err != nil {
 		println("joystick2: i2c:", err.Error())
 		return

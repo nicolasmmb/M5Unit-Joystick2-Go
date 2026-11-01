@@ -27,7 +27,7 @@ No C, C++, CGo or Arduino.
 |---|---|
 | Unit | M5Stack Unit Joystick2 (U024-V2) |
 | MCU | STM32G030F6P6 (64 MHz, 32 KB flash / 8 KB SRAM) |
-| Interface | I2C, **0x63**, up to 400 kHz |
+| Interface | I2C, **0x63**; use **100 kHz** (400 kHz timed out with this firmware) |
 | X/Y | Hall effect, 16-bit ADC (0–65535), mapped to ±4095 |
 | Z | push button (register 1 = released, **0 = pressed**) |
 | LED | 1× WS2812C RGB |
@@ -49,7 +49,7 @@ i2c := machine.I2C1
 _ = i2c.Configure(machine.I2CConfig{
     SDA:       machine.GPIO32,
     SCL:       machine.GPIO33,
-    Frequency: 400 * machine.KHz,
+    Frequency: 100 * machine.KHz, // 400 kHz timed out on the STM32 slave
 })
 
 d := joystick2.New(i2c)
@@ -120,6 +120,13 @@ flash on every write. `SetDeadzone*` leaves 100 ms between the X and Y writes
 (matching the official driver), and `SetAddress` waits 10 ms for the firmware
 to restart its I2C peripheral. Do not rewrite the mapping in a tight loop: flash
 endurance is limited.
+
+## I2C speed
+
+The STM32G030 firmware is an interrupt-driven I2C slave. On the bench, polling
+continuously at **400 kHz** produced `i2c: timeout during write` errors, while
+**100 kHz** (the speed used by the UIFlow examples) ran at 35–43 Hz with zero
+timeouts. The driver works at either speed; 100 kHz is recommended.
 
 ## Timeouts and cancellation
 
