@@ -9,6 +9,21 @@ func (d *Device) SetLED(c Color) error {
 	return d.writeLEDLocked()
 }
 
+// SetLEDHex sets the color from a 0xRRGGBB value (the UIFlow fill_color
+// input). The brightness is applied once.
+func (d *Device) SetLEDHex(rgb uint32) error {
+	return d.SetLED(Color{R: uint8(rgb >> 16), G: uint8(rgb >> 8), B: uint8(rgb)})
+}
+
+// LEDHex returns the color currently set on the unit as 0xRRGGBB.
+func (d *Device) LEDHex() (uint32, error) {
+	c, err := d.LED()
+	if err != nil {
+		return 0, err
+	}
+	return uint32(c.R)<<16 | uint32(c.G)<<8 | uint32(c.B), nil
+}
+
 // SetBrightness sets the LED brightness (0-100) and rewrites the cached color.
 // Unlike the UIFlow helper, the brightness is applied exactly once.
 func (d *Device) SetBrightness(percent uint8) error {

@@ -146,6 +146,42 @@ func TestRaw(t *testing.T) {
 	}
 }
 
+func TestAxisGetters(t *testing.T) {
+	d, f := newTestDevice(t)
+	f.setRaw(111, 222)
+	f.setPosition(-333, 444)
+	if x, err := d.RawX(); err != nil || x != 111 {
+		t.Fatalf("RawX = %d, %v", x, err)
+	}
+	if y, err := d.RawY(); err != nil || y != 222 {
+		t.Fatalf("RawY = %d, %v", y, err)
+	}
+	if x, err := d.PositionX(); err != nil || x != -333 {
+		t.Fatalf("PositionX = %d, %v", x, err)
+	}
+	if y, err := d.PositionY(); err != nil || y != 444 {
+		t.Fatalf("PositionY = %d, %v", y, err)
+	}
+	d.SetOrientation(Orientation{Swap: true})
+	if x, err := d.RawX(); err != nil || x != 222 {
+		t.Fatalf("RawX swapped = %d, %v", x, err)
+	}
+	if y, err := d.PositionY(); err != nil || y != -333 {
+		t.Fatalf("PositionY swapped = %d, %v", y, err)
+	}
+}
+
+func TestReadAddress(t *testing.T) {
+	d, f := newTestDevice(t)
+	if a, err := d.ReadAddress(); err != nil || a != DefaultAddress {
+		t.Fatalf("ReadAddress = %#x, %v", a, err)
+	}
+	f.regs[registerAddress] = 0x2B
+	if a, err := d.ReadAddress(); err != nil || a != 0x2B {
+		t.Fatalf("ReadAddress after change = %#x, %v", a, err)
+	}
+}
+
 func TestRaw8(t *testing.T) {
 	d, f := newTestDevice(t)
 	f.setRaw8(10, 250)
@@ -220,6 +256,19 @@ func TestLED(t *testing.T) {
 	c, err := d.LED()
 	if err != nil || c != (Color{R: 200, G: 100, B: 50}) {
 		t.Fatalf("LED = %+v, %v", c, err)
+	}
+
+	if err := d.SetLEDHex(0x112233); err != nil {
+		t.Fatal(err)
+	}
+	if c, err := d.LED(); err != nil || c != (Color{R: 0x11, G: 0x22, B: 0x33}) {
+		t.Fatalf("SetLEDHex = %+v, %v", c, err)
+	}
+	if v, err := d.LEDHex(); err != nil || v != 0x112233 {
+		t.Fatalf("LEDHex = %#x, %v", v, err)
+	}
+	if err := d.SetLED(Color{R: 200, G: 100, B: 50}); err != nil {
+		t.Fatal(err)
 	}
 
 	if err := d.SetBrightness(50); err != nil {
@@ -371,6 +420,11 @@ func TestNoAlloc(t *testing.T) {
 		{"Calibration", func() { _, _ = d.Calibration() }},
 		{"SetAxisMapping", func() { _ = d.SetAxisMapping(AxisX, AxisMapping{1, 2, 3, 4}) }},
 		{"FirmwareVersion", func() { _, _ = d.FirmwareVersion() }},
+		{"RawX", func() { _, _ = d.RawX() }},
+		{"PositionX", func() { _, _ = d.PositionX() }},
+		{"ReadAddress", func() { _, _ = d.ReadAddress() }},
+		{"SetLEDHex", func() { _ = d.SetLEDHex(0x204060) }},
+		{"LEDHex", func() { _, _ = d.LEDHex() }},
 	}
 	for _, c := range checks {
 		if allocs := testing.AllocsPerRun(50, c.fn); allocs != 0 {

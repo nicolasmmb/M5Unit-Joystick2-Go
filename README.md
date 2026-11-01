@@ -75,15 +75,15 @@ for {
 | `New(bus I2C)` / `NewAt(bus, addr)` | Driver on any bus implementing `Tx(addr, w, r)` |
 | `Present() bool` | Does the unit answer on the bus? |
 | `FirmwareVersion()` / `BootloaderVersion()` | Version registers |
-| `Address() uint8` / `SetAddress(addr) error` | Address (change persists in flash) |
-| `Raw() (x, y uint16, error)` | 16-bit ADC, 0–65535 |
+| `Address() uint8` / `ReadAddress()` / `SetAddress(addr) error` | Cached / register / change (persists in flash) |
+| `Raw() (x, y uint16, error)` / `RawX()` / `RawY()` | 16-bit ADC, 0–65535 |
 | `Raw8() (x, y uint8, error)` | 8-bit ADC |
 | `Button() (bool, error)` | Z-axis button (`true` = pressed) |
-| `Position() (x, y int16, error)` | Mapped position, ±4095 |
+| `Position() (x, y int16, error)` / `PositionX()` / `PositionY()` | Mapped position, ±4095 |
 | `Position8() (x, y int8, error)` | Mapped position, ±127 |
 | `Sample() (Sample, error)` | Position + button in 2 transactions |
 | `SetOrientation(o)` / `Orientation()` | Invert X/Y and swap axes |
-| `SetLED(Color)` / `LED()` / `SetBrightness(0-100)` | RGB LED and cached brightness |
+| `SetLED(Color)` / `SetLEDHex(0xRRGGBB)` / `LED()` / `LEDHex()` / `SetBrightness(0-100)` | RGB LED and cached brightness |
 | `Calibration()` / `SetCalibration(Cal)` | 8× u16 mapping (flash-backed) |
 | `SetAxisMapping(axis, m)` | One axis (8 bytes) |
 | `SetDeadzoneADC(x, y)` / `SetDeadzonePosition(x, y)` | Deadzone via mapping |

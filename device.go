@@ -132,6 +132,14 @@ func (d *Device) Present() bool {
 	return err == nil
 }
 
+// ReadAddress reads the address register from the unit (which may differ from
+// the driver's cached Address after an external change).
+func (d *Device) ReadAddress() (uint8, error) {
+	d.lock()
+	defer d.unlock()
+	return d.readU8(registerAddress)
+}
+
 // FirmwareVersion reads the firmware version register.
 func (d *Device) FirmwareVersion() (uint8, error) {
 	d.lock()
@@ -190,6 +198,18 @@ func (d *Device) Raw() (x, y uint16, err error) {
 	return x, y, nil
 }
 
+// RawX reads only the X axis of the 16-bit ADC (orientation applied).
+func (d *Device) RawX() (uint16, error) {
+	x, _, err := d.Raw()
+	return x, err
+}
+
+// RawY reads only the Y axis of the 16-bit ADC (orientation applied).
+func (d *Device) RawY() (uint16, error) {
+	_, y, err := d.Raw()
+	return y, err
+}
+
 // Raw8 reads the 8-bit ADC values (0-255).
 func (d *Device) Raw8() (x, y uint8, err error) {
 	d.lock()
@@ -218,6 +238,18 @@ func (d *Device) Position() (x, y int16, err error) {
 	d.lock()
 	defer d.unlock()
 	return d.positionLocked()
+}
+
+// PositionX reads only the X axis of the mapped position (orientation applied).
+func (d *Device) PositionX() (int16, error) {
+	x, _, err := d.Position()
+	return x, err
+}
+
+// PositionY reads only the Y axis of the mapped position (orientation applied).
+func (d *Device) PositionY() (int16, error) {
+	_, y, err := d.Position()
+	return y, err
 }
 
 // Position8 reads the 8-bit mapped position (+-127).
