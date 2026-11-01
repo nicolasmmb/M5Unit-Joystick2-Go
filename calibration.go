@@ -14,6 +14,10 @@ type AxisMapping struct {
 	NegMin, NegMax, PosMin, PosMax uint16
 }
 
+// flashSettle is the time the STM32 needs after a mapping write to finish
+// programming its flash (reads during that window may NACK).
+const flashSettle = 20 * time.Millisecond
+
 // Calibration reads the mapping currently stored in the unit.
 func (d *Device) Calibration() (Calibration, error) {
 	d.lock()
@@ -31,7 +35,8 @@ func (d *Device) Calibration() (Calibration, error) {
 }
 
 // SetCalibration writes all eight mapping values. The unit persists them in
-// flash, so avoid writing in a loop (flash endurance).
+// flash, so avoid writing in a loop (flash endurance). Allow the unit to
+// settle (see the package docs) before reading the mapping back.
 func (d *Device) SetCalibration(c Calibration) error {
 	d.lock()
 	defer d.unlock()
@@ -52,7 +57,7 @@ func (d *Device) SetCalibration(c Calibration) error {
 }
 
 // SetAxisMapping writes one axis of the mapping (the other axis is kept). The
-// unit persists it in flash.
+// unit persists it in flash; allow it to settle before reading back.
 func (d *Device) SetAxisMapping(axis Axis, m AxisMapping) error {
 	var reg uint8
 	switch axis {
@@ -106,7 +111,13 @@ func (d *Device) setDeadzone(halfX, halfY uint16) error {
 		return err
 	}
 	time.Sleep(axisWriteDelay)
-	return d.SetAxisMapping(AxisY, ym)
+	if err := d.SetAxisMapping(AxisY, ym); err != nil {
+		return err
+	}
+	// The STM32 programs its flash after the write; give it time before a
+	// read-back or the next I2C transaction.
+	time.Sleep(flashSettle)
+	return nil
 }
 
 func deadzoneMapping(half uint16) AxisMapping {
